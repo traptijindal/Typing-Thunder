@@ -23,7 +23,8 @@ const Reset = () => {
 
     <div className=' flex flex-col md:flex-row justify-between  mt-10 lg:mt-20'>
       <div className="left w-[50%] hidden md:block">
-        <img src={image} alt="" className='h-[400px] lg:h-[470px] ' />
+        {/* <img src={image} alt="" className='h-[400px] lg:h-[470px] ' /> */}
+        <img src={image} alt="" className='h-[400px] lg:h-[500px] lg:w-[520px]' />
      </div>
 
      <div className="right w-full md:w-[40%] text-white ">

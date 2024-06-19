@@ -1,0 +1,21 @@
+.loader {
+    pointer-events: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    border-top-color: black;
+    animation: an1 1s ease infinite;
+   
+    display: inline-block; /* Ensure loader is inline */
+    margin-right: 8px; /* Add some space between loader and text */
+}
+
+@keyframes an1 {
+    0% {
+        transform: rotate(0turn);
+    }
+    100% {
+        transform: rotate(1turn);
+    }
+}

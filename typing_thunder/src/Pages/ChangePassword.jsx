@@ -1,7 +1,7 @@
 import React from 'react'
 import image from "/reset_1.png"
 import logo from '/Logo.png'
-import { FcGoogle } from "react-icons/fc";
+
 
 const ChangePassword = () => {
   return (
