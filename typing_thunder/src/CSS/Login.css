@@ -13,7 +13,7 @@
   }
   
   .wrapper .static-txt {
-    font-size: 36px;
+    font-size: 30px;
     color:  #B3B3B3;
     font-weight: 400;
     
@@ -32,13 +32,64 @@
   .dynamic-txts li {
     color: #fff;
     list-style: none;
-    font-size: 36px;
+    font-size: 30px;
     font-weight: 500;
     position: relative;
     top: 0;
     animation: slide 3s steps(2) infinite ;
   }
   
+  
+   .entryarea{
+    position: relative;
+    
+    height: 50px;
+    line-height: 50px;
+
+   }
+   .textarea{
+    position:absolute;
+    width:100%;
+    outline: none;
+    font-size: 20px;
+    /* padding-bottom: 12px;
+    padding-top: 12px;
+    padding-left:8px ;
+    padding-right: 8px; */
+    color:#fff;
+    padding: 0 17px;
+    line-height: 50px;
+    background: transparent;
+    border-radius: 20px;
+    border:2px solid white;
+    transition: 0.1s ease;
+    z-index:1111;
+   }
+  
+   .labelline{
+    position: absolute;
+    font-size: 15px;
+    padding: 0 17px;
+    color:#fff;
+    transition: 0.2s ease;
+    background-color: #1A1A1A;
+    transition: 0.2s ease;
+    font-weight: 300px;
+   }
+
+    input:focus
+    input:valid  {
+      color:white
+    }
+
+    input:focus + .labelline,
+    input:valid + .labelline{
+      color:white;
+      height:30px;
+      line-height:30px;
+      transform: translate(-15px, -16px) scale(0.88);
+      z-index: 1111;
+    }
    @keyframes slide {
     100% {
       top: -72px; 
@@ -93,9 +144,9 @@
 }
 
 @media (max-width: 768px) {
-  .content {
+  /* .content {
     margin: 32px 20px;
-  }
+  } */
 
   .wrapper {
     flex-direction: column;
@@ -116,4 +167,4 @@
 
 
 
- 
+/* translate(5px, 5px) */

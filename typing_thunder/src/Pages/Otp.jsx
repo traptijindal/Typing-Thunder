@@ -5,7 +5,7 @@ import logo from '/Logo.png'
 
 const Otp = () => {
   return (
-    <div className='mx-5 md:my-[25px] lg:my-[32px] lg:mx-[80px] bg-[#1A1A1A] overflow-hidden '>
+    <div className='m-5 md:mt-[25px]  lg:mx-[80px] overflow-hidden fixed'>
     <div className='hidden text-sm lg:text-xl md:flex justify-between mb-[40px] lg:mb-[60px] '>
 <div className='flex gap-[8px]'>
   <img src={logo} alt="" className='width-[24px] height-[22px] lg:width-[33px] lg:height-[31px]'/>
@@ -19,10 +19,10 @@ const Otp = () => {
 </div>
 </div>
 
-<div className=' flex flex-col md:flex-row justify-between  mt-10 lg:mt-20'>
+<div className=' flex flex-col md:flex-row justify-between  mt-5'>
   <div className="left w-[50%] hidden md:block">
     
-    <img src={otp} alt="" className='h-[400px] lg:h-[500px] lg:w-[520px]' />
+    <img src={otp} alt="" className='  lg:w-[480px]' />
  </div>
 
  <div className="right w-full md:w-[40%] text-white ">
