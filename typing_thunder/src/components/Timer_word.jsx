@@ -1,46 +1,12 @@
-// import React from 'react'
-// import { Clock3 } from 'lucide-react';
-// import quotes from "/Double_Quotes_L.png"
-// import T from "/T.png"
-
-// const Timer_word = () => {
-//   return (
-//     <div className='flex  justify-center space-x-6  mb-16'>
-//       <div className='flex justify-between items-center rounded-3xl p-3 bg-[black] text-[#4D4D4D] font-medium w-20 border-2 border-[#333333] shadow-sm shadow-black'>
-//            <p className='cursor-pointer'>@</p>
-//            <p className='cursor-pointer'>#</p>
-//       </div>
-//       <div className='flex  justify-between items-center rounded-3xl p-3 bg-black text-[#4D4D4D] font-medium w-56 border-2 border-[#333333] shadow-sm shadow-black'>
-//         <p><Clock3 className="cursor-pointer"/></p>
-//       <img src={quotes} alt="image" className='cursor-pointer'/>
-//       <img src={T} alt="image" className='text-[#4D4D4D] cursor-pointer'/>
-
-      
-//       </div>
-
-
-
-//       <div className='flex  justify-between items-center rounded-3xl p-3 bg-black text-[#4D4D4D] font-medium w-60 border-2 border-[#333333] shadow-sm shadow-[black]'>
-//         <p className='cursor-pointer'>15</p>
-//         <p className='cursor-pointer'>30</p>
-//         <p className='cursor-pointer'>60</p>
-//         <p className='cursor-pointer'>120</p>
-//       </div>
-//       <div>
-
-//       </div>
-//     </div>
-//   )
-// }
-
-// export default Timer_word
-
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { Clock3 } from 'lucide-react';
 import quotes from "/Double_Quotes_L.png";
 import T from "/T.png";
 
-const Timer_word = ({ setRandomText, setAddPunctuation, setAddNumbers }) => {
+const Timer_word = ({ setRandomText, setAddPunctuation, setAddNumbers , setIsRunning, isRunning ,showButtons, setShowButtons}) => {
+  const [timeLeft, setTimeLeft] = useState(0);
+ 
+
   const texts = [
     "The sun dipped below the horizon, painting the sky with hues of orange and pink. The evening breeze carried the scent of blooming jasmine, creating a serene atmosphere.",
     "A gentle rain began to fall, tapping softly on the window. The rhythmic sound was calming, a perfect backdrop for an evening spent reading a captivating novel.",
@@ -56,8 +22,8 @@ const Timer_word = ({ setRandomText, setAddPunctuation, setAddNumbers }) => {
      "A sailboat glided gracefully across the lake, its white sails billowing in the wind. The water shimmered under the sun, reflecting the beauty of the clear blue sky.",
      "The laughter of children echoed through the playground, a joyful chorus that lifted spirits. Their carefree games and imaginative adventures were a reminder of the innocence of youth.",
      "A vibrant garden bloomed with a riot of colors, flowers of every hue swaying gently in the breeze. It was a living canvas, a testament to the wonders of nature's palette.",
-     "The aroma of a home-cooked meal filled the house, promising a delicious feast. Family and friends gathered around the table, sharing stories and laughter, creating cherished memories."
-
+     "The aroma of a home-cooked meal filled the house, promising a delicious feast. Family and friends gathered around the table, sharing stories and laughter, creating cherished memories.",
+      
 ];
 
   const generateRandomText = () => {
@@ -89,35 +55,65 @@ const generateNumbers = () =>{
   const handleQuoteClick = () => {
     const randomText = generateRandomText();
     setRandomText(randomText);
+  
+
   };
 
   const handleAddPunctuation = () => {
     const randomPunctuation= generatePunctuation();
     setAddPunctuation(randomPunctuation);
+   
   };
 
   const handleAddNumbers = () => {
     const randomNumber = generateNumbers();
     setAddNumbers(randomNumber);
+
+   
+  };
+
+  useEffect(() => {
+    let timer;
+    if (isRunning && timeLeft > 0) {
+      timer = setInterval(() => {
+        setTimeLeft((prevTime) => prevTime - 1);
+      }, 1000);
+    } else if (timeLeft === 0 && isRunning) {
+      setIsRunning(false);
+      // Handle time-up logic here (e.g., notify the user, stop the test)
+    }
+
+    return () => clearInterval(timer);
+  }, [isRunning, timeLeft]);
+
+  const handleTimeClick = (seconds) => {
+    setTimeLeft(seconds);
+    setIsRunning(true);
+    setShowButtons(false);
   };
 
   return (
-    <div className='flex justify-center space-x-6 mb-16'>
-      <div className='flex justify-between items-center rounded-3xl p-3 bg-[black] text-[#4D4D4D] font-medium w-20 border-2 border-[#333333] shadow-sm shadow-black'>
-        <p className='cursor-pointer' onClick={handleAddPunctuation}>@</p>
-        <p className='cursor-pointer' onClick={handleAddNumbers}>#</p>
-      </div>
-      <div className='flex justify-between items-center rounded-3xl p-3 bg-black text-[#4D4D4D] font-medium w-56 border-2 border-[#333333] shadow-sm shadow-black'>
-        <p><Clock3 className="cursor-pointer"/></p>
-        <img src={quotes} alt="quote" className='cursor-pointer' onClick={handleQuoteClick} />
-        <img src={T} alt="text" className='text-[#4D4D4D] cursor-pointer'/>
-      </div>
-      <div className='flex justify-between items-center rounded-3xl p-3 bg-black text-[#4D4D4D] font-medium w-60 border-2 border-[#333333] shadow-sm shadow-[black]'>
-        <p className='cursor-pointer'>15</p>
-        <p className='cursor-pointer'>30</p>
-        <p className='cursor-pointer'>60</p>
-        <p className='cursor-pointer'>120</p>
-      </div>
+    <div >
+       <p className='text-center text-white mb-6'>Time:{timeLeft}</p>
+      {showButtons &&(
+        <div className='flex justify-center space-x-6 mb-16'>
+        <div className='flex justify-between items-center rounded-3xl p-3 bg-[black] text-[#4D4D4D] font-medium w-20 border-2 border-[#333333] shadow-sm shadow-black'>
+           <p className='cursor-pointer' onClick={handleAddPunctuation}>@</p>
+           <p className='cursor-pointer' onClick={handleAddNumbers}>#</p>
+         </div>
+         <div className='flex justify-between items-center rounded-3xl p-3 bg-black text-[#4D4D4D] font-medium w-56 border-2 border-[#333333] shadow-sm shadow-black'>
+           <p><Clock3 className="cursor-pointer"/></p>
+           <img src={quotes} alt="quote" className='cursor-pointer' onClick={handleQuoteClick} />
+           <img src={T} alt="text" className='text-[#4D4D4D] cursor-pointer'/>
+         </div>
+         <div className='flex justify-between items-center rounded-3xl p-3 bg-black text-[#4D4D4D] font-medium w-60 border-2 border-[#333333] shadow-sm shadow-[black]'>
+           <p className='cursor-pointer' onClick={()=>handleTimeClick(15)}>15</p>
+           <p className='cursor-pointer' onClick={()=>handleTimeClick(30)}>30</p>
+           <p className='cursor-pointer'onClick={()=>handleTimeClick(60)}>60</p>
+           <p className='cursor-pointer'onClick={()=>handleTimeClick(120)}>120</p>
+         </div>
+       </div>
+      )}
     </div>
   );
 };
