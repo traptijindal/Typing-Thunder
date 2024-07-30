@@ -14,7 +14,14 @@ const Landing = () => {
   return (
     <div className='m-5 md:mt-[25px] lg:mt-[28px] lg:mx-[80px] overflow-hidden static'>
       <Navbar/>
-      <Textarea randomText={randomText} randomPunctuation={randomPunctuation} randomNumber={randomNumber}  />
+      <Textarea 
+      randomText={randomText} 
+      randomPunctuation={randomPunctuation} 
+      randomNumber={randomNumber} 
+      // isRunning={isRunning}
+      // speed={speed}
+      // accuracy={accuracy}
+      />
       <Timer_word setRandomText={setRandomText} setAddPunctuation={setAddPunctuation} setAddNumbers={setAddNumbers}  isRunning={isRunning} setIsRunning={setIsRunning} showButtons={showButtons} setShowButtons={setShowButtons}/>
       <Footer showButtons={showButtons} />
     </div>
