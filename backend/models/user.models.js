@@ -29,6 +29,7 @@ const userSchema = new Schema({
 
 userSchema.pre("save" ,async function(next){
     if(!this.isModified("password")) return next();
+    console.log("Hashing password:", this.password);
     this.password = await bcrypt.hash(this.password , 10)
     next()
 })
@@ -36,6 +37,7 @@ userSchema.pre("save" ,async function(next){
 userSchema.methods.isPasswordCorrect = async function(password) {
     return await bcrypt.compare(password , this.password)
 }
+
 
 userSchema.methods.generateAccessToken = function() {
     return jwt.sign({
@@ -59,5 +61,22 @@ userSchema.methods.generateRefreshToken = function() {
     });
 };
 
+
+export const authMiddleware = (req, res, next) => {
+    const token = req.header('Authorization').replace('Bearer ', '');
+  
+    if (!token) {
+      throw new ApiError(401, 'No token provided');
+    }
+  
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.user = decoded; // assuming the token contains user info, including userId
+      next();
+    } catch (err) {
+      throw new ApiError(401, 'Invalid token');
+    }
+  };
+  
 
 export const User= mongoose.model("User",userSchema)

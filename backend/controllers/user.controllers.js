@@ -4,7 +4,8 @@ import { User } from "../models/user.models.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import nodemailer from 'nodemailer';
 import { OTPVerification } from "../models/UserOTPVerification.js";
-import bcrypt from 'bcrypt';  // Don't forget to install bcryptjs: npm install bcryptjs
+import bcrypt from "bcrypt"
+import { saveOTP } from "../models/UserOTPVerification.js";
 import { v4 as uuidv4 } from 'uuid';
 
 import { config } from 'dotenv';
@@ -23,7 +24,7 @@ transporter.verify((error, success) => {
   if (error) {
     console.error("Error verifying transporter:", error);
   } else {
-    console.log("Transporter ready for sending messages");
+    console.log("Transporter ready for sending messages",success);
   }
 });
 
@@ -43,15 +44,70 @@ const generateAccessAndRefreshToken = async (userId) => {
 };
 
 
+const checkToken = asyncHandler(async (req, res) => {
+  const token = req.headers.authorization.split(' ')[1];
+
+  if (!token) {
+    throw new ApiError(401, "No token provided");
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id).select('-password -refreshToken');
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+    res.status(200).json(new ApiResponse(200, { loggedIn: true, username: user.username }));
+  } catch (error) {
+    throw new ApiError(401, "Invalid token");
+  }
+});
+
+
+// const sendOTPVerificationEmail = async (email, userId) => {
+//   try {
+//     const otp = `${Math.floor(100000 + Math.random() * 900000)}`;
+//     const saltRounds = 10;
+//     const hashedOTP = await bcrypt.hash(otp, saltRounds);
+
+//     const newOTPVerification = new OTPVerification({
+//       userId,
+//       otp: hashedOTP,
+//       createdAt: Date.now(),
+//       expiresAt: Date.now() + 3600000, // 1 hour
+//     });
+
+//     await newOTPVerification.save();
+
+//     let mailOptions = {
+//       from: process.env.AUTH_EMAIL,
+//       to: email,
+//       subject: 'OTP Verification',
+//       html: `<p>Enter <b>${otp}</b> in the app to verify your email address </p><p>This code <b>expires in 1 hour</b>.</p>`,
+//     };
+
+//     await transporter.sendMail(mailOptions);
+//     console.log(`OTP sent to ${email}`);
+//   } catch (error) {
+//     console.error("Error sending OTP verification email:", error);
+//     throw new ApiError(500, "Failed to send OTP verification email");
+//   }
+// };
+
+
 const sendOTPVerificationEmail = async (email, userId) => {
   try {
-    const otp = `${Math.floor(1000 + Math.random() * 9000)}`;
-    const saltRounds = 10;
-    const hashedOTP = await bcrypt.hash(otp, saltRounds);
+    // Generate 6-digit OTP
+    const otp = `${Math.floor(100000 + Math.random() * 900000)}`;
+    console.log(`Generated OTP: ${otp}`); // Log the generated OTP
+
+    // const saltRounds = 10;
+    // const hashedOTP = await bcrypt.hash(otp, saltRounds);
 
     const newOTPVerification = new OTPVerification({
       userId,
-      otp: hashedOTP,
+      // otp: hashedOTP,
+      otp,
       createdAt: Date.now(),
       expiresAt: Date.now() + 3600000, // 1 hour
     });
@@ -73,12 +129,29 @@ const sendOTPVerificationEmail = async (email, userId) => {
   }
 };
 
-// signUser Controller
+
+// signUser controller
+
 const signUser = asyncHandler(async (req, res) => {
   const { username, password, email } = req.body;
 
+  // Regular expressions for validation
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+  const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{6,}$/;
+
+  // Check if any field is empty
   if ([username, password, email].some((field) => field?.trim() === "")) {
     throw new ApiError(400, "All fields are required");
+  }
+
+  // Validate email
+  if (!emailRegex.test(email)) {
+    throw new ApiError(400, "Invalid email format. Only Gmail addresses are allowed.");
+  }
+
+  // Validate password
+  if (!passwordRegex.test(password)) {
+    throw new ApiError(400, "Password must be at least 6 characters long, contain one uppercase letter, one special character, and one number.");
   }
 
   const existedUser = await User.findOne({
@@ -110,14 +183,20 @@ const signUser = asyncHandler(async (req, res) => {
   return res.status(201).json(new ApiResponse(201, createdUser, "User registered successfully. Verification OTP sent to email."));
 });
 
+
+
+
+
 // loginUser Controller
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password, username } = req.body;
 
-  if (!username && !email) {
-    throw new ApiError(400, "Username or email is required");
+  // if (!username && !email) {
+  //   throw new ApiError(400, "Username or email is required");
+  // }
+  if ((!username && !email) || !password) {
+    throw new ApiError(400, "Username or email and password are required");
   }
-
   const user = await User.findOne({
     $or: [{ username }, { email }],
   });
@@ -128,6 +207,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
   const isPasswordValid = await user.isPasswordCorrect(password);
   if (!isPasswordValid) {
+    console.log("invalid password");
     throw new ApiError(401, "Invalid user credentials");
   }
 
@@ -146,30 +226,78 @@ const loginUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, { user: loggedInUser, accessToken, refreshToken }, "User logged in successfully"));
 });
 
-const verifyOTP = async (req, res) => {
-  try {
-    const { userId, otp } = req.body;
-    const otpRecord = await OTPVerification.findOne({ userId });
+// controllers/otpController.js
 
-    if (!otpRecord) {
-      throw new ApiError(400, "Invalid OTP or userId");
-    }
+// const verifyOTP = async(req,res)=>{
+//   try {
+//     const { userId, otp } = req.body;
+  
+//     if (!userId || !otp) {
+//       throw new ApiError(400, "User ID and OTP are required");
+//     }
+  
+//     const otpRecord = await OTPVerification.findOne({ userId });
+//     if (!otpRecord) {
+//       throw new ApiError(400, "Invalid OTP or User ID");
+//     }
+  
+//     const isValidOTP = await bcrypt.compare(otp, otpRecord.otp);
+//     if (!isValidOTP) {
+//       throw new ApiError(400, "Invalid OTP");
+//     }
+  
+//     await User.updateOne({ _id: userId },{verified:true});
+//     await OTPVerification.deleteOne({ userId });
+  
+//     console.log("OTP verified successfully for userId:", userId);
+//     res.status(200).json(new ApiResponse(200, null, "OTP verified successfully"));
+//   } catch (error) {
+//     console.error("Error verifying OTP:", error);
+//     if (error instanceof ApiError) {
+//       res.status(error.statusCode).json(new ApiResponse(error.statusCode, null, error.message));
+//     } else {
+//       res.status(500).json(new ApiResponse(500, null, "Failed to verify OTP"));
+//     }
+//   };
+  
+// };
 
-    const isValidOTP = await bcrypt.compare(otp, otpRecord.otp);
-    if (!isValidOTP) {
-      throw new ApiError(400, "Invalid OTP");
-    }
+const verifyOTP = async(req,res)=>{
+    try {
+      const { otp } = req.body;
+    
+      if ( !otp) {
+        throw new ApiError(400, "User ID and OTP are required");
+      }
+    
+      const otpRecord = await OTPVerification.findOne({ otp });
+      if (!otpRecord) {
+        throw new ApiError(400, "Invalid OTP or User ID");
+      }
+    
+      const isValidOTP = await otp==otpRecord.otp;
+      if (!isValidOTP) {
+        throw new ApiError(400, "Incorrect OTP. Please check your code and try again");
+      }
 
-    // OTP is valid, perform necessary actions (e.g., mark user as verified)
-    // Optionally, delete the OTP record after successful verification
-    await OTPVerification.deleteOne({ userId });
+      const {userId}=otpRecord;
+    
+      await User.updateOne({ _id: userId },{verified:true});
+      await OTPVerification.deleteOne({ userId });
+    
+      console.log("OTP verified successfully for userId:", userId);
+      res.status(200).json(new ApiResponse(200, null, "OTP verified successfully"));
+    } catch (error) {
+      console.error("Error verifying OTP:", error);
+      if (error instanceof ApiError) {
+        res.status(error.statusCode).json(new ApiResponse(error.statusCode, null, error.message));
+      } else {
+        res.status(500).json(new ApiResponse(500, null, "Failed to verify OTP"));
+      }
+    };
+    
+  };
 
-    res.status(200).json(new ApiResponse(200, null, "OTP verified successfully"));
-  } catch (error) {
-    console.error("Error verifying OTP:", error);
-    res.status(500).json(new ApiResponse(500, null, "Failed to verify OTP"));
-  }
-}
 
 const resetPassword = asyncHandler(async(req,res) =>{
   const {email} = req.body;
@@ -194,9 +322,67 @@ const resetPassword = asyncHandler(async(req,res) =>{
 
   return res.status(201).json(new ApiResponse(201,"Verification OTP sent to email."));
 })
+// const changePassword = asyncHandler(async (req, res) => {
+//   const { userId, password, confirmPassword } = req.body;
+
+//   if (!password || !confirmPassword) {
+//     throw new ApiError(400, "All fields are required");
+//   }
+
+//   if (password !== confirmPassword) {
+//     throw new ApiError(400, "Passwords do not match");
+//   }
+
+//   const saltRounds = 10;
+//   const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+//   const user = await User.findById(userId);
+//   if (!user) {
+//     throw new ApiError(404, "User not found");
+//   }
+
+//   user.password = hashedPassword;
+//   await user.save();
+
+//   // Optionally, delete the OTP record after successful password reset
+//   await OTPVerification.deleteMany({ userId });
+
+//   res.status(200).json(new ApiResponse(200, null, "Password reset successfully"));
+// });
+
+// const changePassword = asyncHandler(async (req, res) => {
+//   const { userId, password, confirmPassword } = req.body;
+
+//   if (!password || !confirmPassword) {
+//     throw new ApiError(400, "All fields are required");
+//   }
+
+//   if (password !== confirmPassword) {
+//     throw new ApiError(400, "Passwords do not match");
+//   }
+
+//   const user = await User.findById(userId);
+//   if (!user) {
+//     throw new ApiError(404, "User not found");
+//   }
+
+//   const otpRecord = await OTPVerification.findOne({ userId });
+//   if (!otpRecord) {
+//     throw new ApiError(400, "OTP verification required to change password");
+//   }
+
+//   user.password = password;
+//   await user.save();
+
+//   await OTPVerification.deleteMany({ userId });
+
+//   res.status(200).json(new ApiResponse(200, null, "Password reset successfully"));
+// });
+
 
 const changePassword = asyncHandler(async (req, res) => {
-  const { userId, password, confirmPassword } = req.body;
+  const { password, confirmPassword } = req.body;
+  const userId = req.user.id; // get userId from req.user, set by authMiddleware
 
   if (!password || !confirmPassword) {
     throw new ApiError(400, "All fields are required");
@@ -206,22 +392,23 @@ const changePassword = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Passwords do not match");
   }
 
-  const saltRounds = 10;
-  const hashedPassword = await bcrypt.hash(password, saltRounds);
-
   const user = await User.findById(userId);
   if (!user) {
     throw new ApiError(404, "User not found");
   }
 
-  user.password = hashedPassword;
+  const otpRecord = await OTPVerification.findOne({ userId });
+  if (!otpRecord) {
+    throw new ApiError(400, "OTP verification required to change password");
+  }
+
+  user.password = password;
   await user.save();
 
-  // Optionally, delete the OTP record after successful password reset
   await OTPVerification.deleteMany({ userId });
 
   res.status(200).json(new ApiResponse(200, null, "Password reset successfully"));
 });
 
 
-export { signUser, loginUser, sendOTPVerificationEmail, verifyOTP, resetPassword,changePassword };
+export { signUser, loginUser, sendOTPVerificationEmail, verifyOTP, resetPassword,changePassword,checkToken };
