@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.models.js";
@@ -118,7 +119,7 @@ const sendOTPVerificationEmail = async (email, userId) => {
       from: process.env.AUTH_EMAIL,
       to: email,
       subject: 'OTP Verification',
-      html: `<p>Enter <b>${otp}</b> in the app to verify your email address </p><p>This code <b>expires in 1 hour</b>.</p>`,
+      html: `<p>Enter <b>${otp}</b> in the app to verify your email address </p><p>This code <b>expires in 1 min</b>.</p>`,
     };
 
     await transporter.sendMail(mailOptions);
@@ -141,17 +142,19 @@ const signUser = asyncHandler(async (req, res) => {
 
   // Check if any field is empty
   if ([username, password, email].some((field) => field?.trim() === "")) {
-    throw new ApiError(400, "All fields are required");
+    return res.status(400).json({ message: "All fields are required" });
   }
 
   // Validate email
   if (!emailRegex.test(email)) {
-    throw new ApiError(400, "Invalid email format. Only Gmail addresses are allowed.");
+    return res.status(400).json({ message: "Invalid email format. Only Gmail addresses are allowed." });
   }
 
   // Validate password
   if (!passwordRegex.test(password)) {
-    throw new ApiError(400, "Password must be at least 6 characters long, contain one uppercase letter, one special character, and one number.");
+    return res.status(400).json({
+      message: "Password must be at least 6 characters long, contain one uppercase letter, one special character, and one number.",
+    });
   }
 
   const existedUser = await User.findOne({
@@ -159,7 +162,7 @@ const signUser = asyncHandler(async (req, res) => {
   });
 
   if (existedUser) {
-    throw new ApiError(409, "User with email or username already exists");
+    return res.status(409).json({ message: "User with email or username already exists" });
   }
 
   const user = await User.create({
@@ -171,132 +174,237 @@ const signUser = asyncHandler(async (req, res) => {
   const createdUser = await User.findById(user._id).select("-password -refreshToken");
 
   if (!createdUser) {
-    throw new ApiError(500, "Something went wrong while registering the user");
+    return res.status(500).json({ message: "Something went wrong while registering the user" });
   }
 
   try {
     await sendOTPVerificationEmail(email, user._id);
   } catch (error) {
-    throw new ApiError(500, "User registered but failed to send OTP");
+    return res.status(500).json({ message: "User registered but failed to send OTP" });
   }
 
-  return res.status(201).json(new ApiResponse(201, createdUser, "User registered successfully. Verification OTP sent to email."));
+  return res.status(201).json({
+    data: createdUser,
+    message: "User registered successfully. Verification OTP sent to email.",
+  });
 });
-
-
 
 
 
 // loginUser Controller
+// const loginUser = asyncHandler(async (req, res) => {
+//   const { email, password, username } = req.body;
+
+ 
+//   if ((!username && !email) || !password) {
+//     throw new ApiError(400, "Username or email and password are required");
+//   }
+//   const user = await User.findOne({
+//     $or: [{ username }, { email }],
+//   });
+
+//   if (!user) {
+//     throw new ApiError(400, "User not found!");
+//   }
+
+//   const isPasswordValid = await user.isPasswordCorrect(password);
+//   if (!isPasswordValid) {
+//     console.log("invalid password");
+//     throw new ApiError(401, "Wrong password");
+//   }
+
+//   const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user._id);
+
+//   const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
+//   const options = {
+//     httpOnly: true,
+//     secure: true,
+//   };
+
+//   return res
+//     .status(200)
+//     .cookie("accessToken", accessToken, options)
+//     .cookie("refreshToken", refreshToken, options)
+//     .json(new ApiResponse(200, { user: loggedInUser, accessToken, refreshToken }, "User logged in successfully"));
+// });
+
+
 const loginUser = asyncHandler(async (req, res) => {
-  const { email, password, username } = req.body;
+  try {
+    console.log('Request Body:', req.body); // Log the request body
 
-  // if (!username && !email) {
-  //   throw new ApiError(400, "Username or email is required");
-  // }
-  if ((!username && !email) || !password) {
-    throw new ApiError(400, "Username or email and password are required");
+    const { email, password, username } = req.body;
+
+    if ((!username && !email) || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Username or email and password are required"
+      });
+    }
+
+    const user = await User.findOne({
+      $or: [{ username }, { email }],
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "User not found!"
+      });
+    }
+
+    const isPasswordValid = await user.isPasswordCorrect(password);
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: "Wrong password"
+      });
+    }
+
+    const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user._id);
+    const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
+
+    const options = {
+      httpOnly: true,
+      secure: true,
+    };
+
+    res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", refreshToken, options)
+      .json({
+        success: true,
+        message: "User logged in successfully",
+        data: {
+          user: loggedInUser,
+          accessToken,
+          refreshToken
+        }
+      });
+  } catch (error) {
+    console.error('Error:', error); // Log any errors
+    res.status(500).json({
+      success: false,
+      message: 'An unexpected error occurred'
+    });
   }
-  const user = await User.findOne({
-    $or: [{ username }, { email }],
-  });
-
-  if (!user) {
-    throw new ApiError(400, "User does not exist");
-  }
-
-  const isPasswordValid = await user.isPasswordCorrect(password);
-  if (!isPasswordValid) {
-    console.log("invalid password");
-    throw new ApiError(401, "Invalid user credentials");
-  }
-
-  const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user._id);
-
-  const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
-  const options = {
-    httpOnly: true,
-    secure: true,
-  };
-
-  return res
-    .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
-    .json(new ApiResponse(200, { user: loggedInUser, accessToken, refreshToken }, "User logged in successfully"));
 });
+
 
 // controllers/otpController.js
 
-// const verifyOTP = async(req,res)=>{
+
+
+// const verifyOTP = async (req, res) => {
 //   try {
-//     const { userId, otp } = req.body;
-  
-//     if (!userId || !otp) {
-//       throw new ApiError(400, "User ID and OTP are required");
+//     const { otp } = req.body;
+
+//     if (!otp) {
+//       return res.status(400).json({ message: "OTP is required" });
 //     }
-  
-//     const otpRecord = await OTPVerification.findOne({ userId });
+
+//     const otpRecord = await OTPVerification.findOne({ otp });
 //     if (!otpRecord) {
-//       throw new ApiError(400, "Invalid OTP or User ID");
+//       return res.status(400).json({ message: "Incorrect OTP. Please check your code and try again" });
 //     }
-  
-//     const isValidOTP = await bcrypt.compare(otp, otpRecord.otp);
+
+//     const isValidOTP = otp === otpRecord.otp;
 //     if (!isValidOTP) {
-//       throw new ApiError(400, "Invalid OTP");
+//       return res.status(400).json({ message: "Incorrect OTP. Please check your code and try again" });
 //     }
-  
-//     await User.updateOne({ _id: userId },{verified:true});
+
+//     const { userId } = otpRecord;
+
+//     await User.updateOne({ _id: userId }, { verified: true });
 //     await OTPVerification.deleteOne({ userId });
-  
+
 //     console.log("OTP verified successfully for userId:", userId);
-//     res.status(200).json(new ApiResponse(200, null, "OTP verified successfully"));
+//     return res.status(200).json({ message: "OTP verified successfully" });
 //   } catch (error) {
 //     console.error("Error verifying OTP:", error);
-//     if (error instanceof ApiError) {
-//       res.status(error.statusCode).json(new ApiResponse(error.statusCode, null, error.message));
-//     } else {
-//       res.status(500).json(new ApiResponse(500, null, "Failed to verify OTP"));
-//     }
-//   };
-  
+//     return res.status(500).json({ message: "Failed to verify OTP" });
+//   }
 // };
 
-const verifyOTP = async(req,res)=>{
-    try {
-      const { otp } = req.body;
-    
-      if ( !otp) {
-        throw new ApiError(400, "User ID and OTP are required");
-      }
-    
-      const otpRecord = await OTPVerification.findOne({ otp });
-      if (!otpRecord) {
-        throw new ApiError(400, "Invalid OTP or User ID");
-      }
-    
-      const isValidOTP = await otp==otpRecord.otp;
-      if (!isValidOTP) {
-        throw new ApiError(400, "Incorrect OTP. Please check your code and try again");
-      }
+const verifyOTP = async (req, res) => {
+  try {
+    const { otp } = req.body;
 
-      const {userId}=otpRecord;
+    if (!otp) {
+      return res.status(400).json({ message: "OTP is required" });
+    }
+
+    const otpRecord = await OTPVerification.findOne({ otp });
+    if (!otpRecord) {
+      return res.status(400).json({ message: "Incorrect OTP. Please check your code and try again" });
+    }
+
+    const isValidOTP = otp === otpRecord.otp;
+    if (!isValidOTP) {
+      return res.status(400).json({ message: "Incorrect OTP. Please check your code and try again" });
+    }
+
+    const { userId } = otpRecord;
+
+    await User.updateOne({ _id: userId }, { verified: true });
+    await OTPVerification.deleteOne({ userId });
+
+    console.log("OTP verified successfully for userId:", userId);
+    return res.status(200).json({ message: "OTP verified successfully" });
+  } catch (error) {
+    console.error("Error verifying OTP:", error);
+    return res.status(500).json({ message: "Failed to verify OTP" });
+  }
+};
+
+
+
+const resendOTP = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const existedUser = await User.findOne({
+      email 
+    });
+  
+    if(!existedUser){
+      throw new ApiError(404,"User not found")
+    }
+   
+     
+    // Validate user._id
+    // if (!mongoose.Types.ObjectId.isValid(userId)) {
+    //   return res.status(400).json({ message: "Invalid user ID" });
+    // }
+
+    // Generate a new OTP
+    const newOTP = `${Math.floor(100000 + Math.random() * 900000)}`;
     
-      await User.updateOne({ _id: userId },{verified:true});
-      await OTPVerification.deleteOne({ userId });
-    
-      console.log("OTP verified successfully for userId:", userId);
-      res.status(200).json(new ApiResponse(200, null, "OTP verified successfully"));
-    } catch (error) {
-      console.error("Error verifying OTP:", error);
-      if (error instanceof ApiError) {
-        res.status(error.statusCode).json(new ApiResponse(error.statusCode, null, error.message));
-      } else {
-        res.status(500).json(new ApiResponse(500, null, "Failed to verify OTP"));
-      }
-    };
-    
-  };
+    console.log(`newotp: ${newOTP}`);
+
+    const expiresAt = new Date(Date.now() + 1 * 60 * 1000);
+
+    // Update or create OTP record
+    await OTPVerification.updateOne(
+      { _id:  existedUser._id},
+      { otp: newOTP, createdAt: new Date(), expiresAt },
+      { upsert: true } // Create a new record if it doesn't exist
+    );
+
+    // Send OTP verification email
+    await sendOTPVerificationEmail(email, existedUser._id);
+
+    return res.status(200).json({ message: "OTP has been resent successfully" });
+  } catch (error) {
+    console.error("Error resending OTP:", error);
+    return res.status(500).json({ message: "Failed to resend OTP" });
+  }
+};
 
 
 const resetPassword = asyncHandler(async(req,res) =>{
@@ -411,4 +519,4 @@ const changePassword = asyncHandler(async (req, res) => {
 });
 
 
-export { signUser, loginUser, sendOTPVerificationEmail, verifyOTP, resetPassword,changePassword,checkToken };
+export { signUser, loginUser, sendOTPVerificationEmail, verifyOTP, resendOTP , resetPassword,changePassword,checkToken };
