@@ -170,8 +170,8 @@ const Reset = () => {
               Send OTP
             </button>
           </form>
-          {message && <p className='text-green-500'>{message}</p>}
-          {error && <p className='text-red-500'>{error}</p>}
+          {message && <p className='text-green-500 my-2'>{message}</p>}
+          {error && <p className='text-red-500 my-2'>{error}</p>}
           <button className='w-full text-white border border-white rounded-xl py-3 pl-2 pr-8 text-center text-base lg:text-xl flex justify-center items-center'>
             <FcGoogle className='mr-2' /> Continue with Google
           </button>
