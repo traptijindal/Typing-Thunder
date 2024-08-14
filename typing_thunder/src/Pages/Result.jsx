@@ -47,7 +47,7 @@ const Result = () => {
         </div>
         <div className="mt-6 text-xl">
           <p className="text-gray-400 text-2xl mb-5 mt-10">Characters</p>
-          <div className="flex space-x-28">
+          <div className="flex space-x-24">
             <p className="text-6xl text-white">
               {correct} <span className="text-[#666666] text-2xl">Correct</span>
             </p>

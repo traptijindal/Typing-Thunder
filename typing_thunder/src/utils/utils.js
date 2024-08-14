@@ -6,7 +6,7 @@ export const calculateAccuracy = (userInput, text) => {
     }
   }
   const accuracy = ((correctCharacters / text.length) * 100);
-  return Math.round(accuracy) // Example
+  return Math.round(accuracy) 
 };
 
 export const calculateSpeed = (userInput, Total_time, timeLeft) => {
@@ -22,8 +22,9 @@ export const calculateIncorrect = (userInput, text) => {
     if (userInput[i] != text[i]) {
       Incorrect++;
     }
-    return Incorrect;
+  
   }
+  return Incorrect;
 };
 
 export const calculateCorrect = (userInput, text) => {
