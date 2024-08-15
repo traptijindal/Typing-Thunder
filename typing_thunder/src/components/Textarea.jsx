@@ -146,7 +146,7 @@ const Textarea = ({
   return (
     <div className="mb-10">
       <div className="flex justify-center">
-        <div className="relative flex mb-20 w-full max-w-3xl my-8">
+        <div className="relative flex mb-20 w-full max-w-60 md:max-w-lg lg:max-w-2xl my-8">
           <img
             src={profile}
             alt="profile"
@@ -175,7 +175,7 @@ const Textarea = ({
           </div>
         </div>
       </div>
-      <div className="text-[25px] text-start font-ocr">
+      <div className="text-[20px] lg:text-[25px] text-start font-ocr">
         {getHighlightedText(userInput, text)}
       </div>
     </div>

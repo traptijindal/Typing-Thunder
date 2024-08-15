@@ -227,18 +227,18 @@ const Navbar = () => {
         <img
           src={logo}
           alt="Logo"
-          className="width-[24px] height-[22px] lg:width-[33px] lg:height-[31px]"
+          className="w-[24px] h-[22px] lg:w-[30px] lg:h-[27px]"
         />
-        <p className="text-[#E6E6E6]">TypingThunder</p>
+        <p className="text-[#E6E6E6] ">TypingThunder</p>
       </div>
-      <div className="flex space-x-12 text-base">
+      <div className="flex space-x-[4vw] text-sm lg:text-base  ">
         <p className="text-white">Speed Test</p>
         <p className="text-[#666666]">Play 1 v 1</p>
         <p className="text-[#666666]">Practice</p>
         <p className="text-[#666666]">Sphere</p>
         <p className="text-[#666666]">Ratings</p>
       </div>
-      <div className="text-base font-medium flex space-x-3 p-1">
+      <div className="text-base font-medium flex space-x-[1vw] p-1">
         {user ? (
           <>
             <p className="text-white">{user.username}</p>
@@ -258,13 +258,13 @@ const Navbar = () => {
           <>
             <button
               onClick={() => navigate("/signup")}
-              className="rounded-3xl bg-white text-black p-2"
+              className=" rounded-3xl bg-white text-black p-2 text-sm lg:text-base"
             >
               Sign Up
             </button>
             <button
               onClick={() => navigate("/login")}
-              className="text-white p-2"
+              className="text-white p-2 text-sm lg:text-base"
             >
               Login
             </button>
