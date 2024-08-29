@@ -54,4 +54,12 @@ export const calculateExtra = (userInput, text) => {
   return 0;
 };
 
-
+export const calculateProgress = (input, text) => {
+  let correctCount = 0;
+  for (let i = 0; i < text.length; i++) {
+    if (i < input.length && input[i] === text[i]) {
+      correctCount++;
+    }
+  }
+  return (correctCount / text.length) * 100;
+};

@@ -4,6 +4,7 @@ import quotes from "/Double_Quotes_L.png";
 import T from "/T.png";
 import { calculateAccuracy, calculateSpeed } from "../utils/utils.js";
 import ActionButtons from "../components/ActionButtons";
+import Time from "./Time.jsx";
 
 const Timer_word = ({
   setRandomText,
@@ -233,19 +234,19 @@ const Timer_word = ({
           </div>
 
           <div className="flex justify-between items-center rounded-3xl p-3 bg-black text-[#4D4D4D] font-medium w-60 border-2 border-[#333333] shadow-sm shadow-[black]">
-            <p className="cursor-pointer" onClick={() => handleTimeClick(15)}>
-              15
-            </p>
-            <p className="cursor-pointer" onClick={() => handleTimeClick(30)}>
-              30
-            </p>
-            <p className="cursor-pointer" onClick={() => handleTimeClick(60)}>
-              60
-            </p>
-            <p className="cursor-pointer" onClick={() => handleTimeClick(120)}>
-              120
-            </p>
-          </div>
+    <p className="cursor-pointer" onClick={() => handleTimeClick(15)}>
+      15
+    </p>
+    <p className="cursor-pointer" onClick={() => handleTimeClick(30)}>
+      30
+    </p>
+    <p className="cursor-pointer" onClick={() => handleTimeClick(60)}>
+      60
+    </p>
+    <p className="cursor-pointer" onClick={() => handleTimeClick(120)}>
+      120
+    </p>
+  </div>
         </div>
       )}
     </div>

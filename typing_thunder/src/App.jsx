@@ -8,6 +8,7 @@ import Reset from './Pages/Reset.jsx'
 import ChangePassword from './Pages/ChangePassword.jsx'
 import Otp from './Pages/Otp.jsx'
 import Result from './Pages/Result.jsx';
+import Practice from './Pages/Practice.jsx';
 
 
 const App = () => {
@@ -28,6 +29,7 @@ const App = () => {
       <Route path='/change-password' element={<ChangePassword/>}/>
       <Route path='/otp' element={<Otp/>}/>
       <Route path='/result' element={<Result/>}/>
+      <Route path="/practice" element={<Practice/>}/>
       </Routes>
       
     </div>
