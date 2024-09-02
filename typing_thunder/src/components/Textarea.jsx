@@ -84,30 +84,41 @@ const Textarea = ({
   };
 
  
-
   useEffect(() => {
     const handleKeyDown = (e) => {
       let key = e.key;
-
+  
+      // Ignore non-printable keys
+      const nonPrintableKeys = [
+        "Alt", "Control", "Meta", "Escape", "ArrowUp", "ArrowDown", "ArrowLeft", 
+        "ArrowRight", "PageUp", "PageDown", "Home", "End", "Insert", "Delete", 
+        "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12", 
+        "Tab", "NumLock", "ScrollLock", "Pause", "PrintScreen", "Fn", "ContextMenu"
+      ];
+  
+      if (nonPrintableKeys.includes(key)) {
+        return;
+      }
+  
       if (e.altKey) {
         return;
       }
-
+  
       if (key === "Shift") {
         setShiftPressed(true);
         return;
       }
-
+  
       if (key === "CapsLock") {
         setCapsLockOn((prevState) => !prevState);
         return;
       }
-
+  
       if (key === "Backspace") {
         setUserInput((prevInput) => prevInput.slice(0, -1));
         return;
       }
-
+  
       if (shiftPressed && shiftSymbols[key]) {
         key = shiftSymbols[key];
       } else {
@@ -116,29 +127,30 @@ const Textarea = ({
         } else {
           key = key.toLowerCase();
         }
-
+  
         if (shiftPressed && !shiftSymbols[key]) {
           key = key.toUpperCase();
         }
       }
-
+  
       setUserInput((prevInput) => prevInput + key);
     };
-
+  
     const handleKeyUp = (e) => {
       if (e.key === "Shift") {
         setShiftPressed(false);
       }
     };
-
+  
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
-
+  
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
   }, [shiftPressed, capsLockOn]);
+  
 
   return (
     <div className="mb-10">

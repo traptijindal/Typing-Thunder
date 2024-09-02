@@ -10,8 +10,10 @@ export const AppProvider = ({ children }) => {
   const [isRunning, setIsRunning] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const [Total_time, setTime] = useState();
+  const [showButtons, setShowButtons] = useState(true);
+  
   return (
-    <AppContext.Provider value={{ userInput, setUserInput, text, setText,isRunning,setIsRunning,timeLeft,setTimeLeft }}>
+    <AppContext.Provider value={{ userInput, setUserInput, text, setText,isRunning,setIsRunning,timeLeft,setTimeLeft,Total_time,setTime, showButtons,setShowButtons}}>
       {children}
     </AppContext.Provider>
   );

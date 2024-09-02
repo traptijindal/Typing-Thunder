@@ -8,17 +8,18 @@ import ProgressTracker from "../components/ProgressTracker";
 import { useAppContext } from '../context/AppContext';
 
 const Landing = () => {
-  const { userInput, setUserInput, text, setText,isRunning,setIsRunning,timeLeft,setTimeLeft,Total_time,setTime } = useAppContext();
-  
+  const { showButtons,setShowButtons } = useAppContext();
+  const defaultText =
+  "Most of them are based on basic text fields that were modified to better handle specific types of information, like the credit card numbers. Here are just a few examples of input types that are most commonly used throughout UIs we creating.";
   const [randomText, setRandomText] = useState("");
   const [randomPunctuation, setAddPunctuation] = useState(false);
   const [randomNumber, setAddNumbers] = useState(false);
-  // const [isRunning, setIsRunning] = useState(false);
-  const [showButtons, setShowButtons] = useState(true);
-  // const [userInput, setUserInput] = useState("");
-  // const [text, setText] = useState(defaultText);
-  // const [Total_time, setTime] = useState();
-  // const [timeLeft, setTimeLeft] = useState(0);
+  const [isRunning, setIsRunning] = useState(false);
+
+  const [userInput, setUserInput] = useState("");
+  const [text, setText] = useState(defaultText);
+  const [Total_time, setTime] = useState();
+  const [timeLeft, setTimeLeft] = useState(0);
   const navigate = useNavigate();
 
   const handleNext = () => {
@@ -64,6 +65,7 @@ const Landing = () => {
         setTime={setTime}
         setTimeLeft={setTimeLeft}
         timeLeft={timeLeft}
+        
       />
 
       <Footer showButtons={showButtons} />

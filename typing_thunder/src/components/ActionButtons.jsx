@@ -7,6 +7,7 @@ const ActionButtons = ({
   onRestartHover,
   onShareHover,
   handleNext,
+ onShareClick
 }) => {
   const [hoverTextNext, setHoverTextNext] = React.useState(false);
   const [hoverTextRestart, setHoverTextRestart] = React.useState(false);
@@ -49,6 +50,7 @@ const ActionButtons = ({
         <img
           src="/Share_Android.png"
           alt="Share"
+          onClick={onShareClick}
           //   onMouseEnter={() => {
           //     setHoverTextShare(true);
           //     if (onShareHover) onShareHover();

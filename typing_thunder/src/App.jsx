@@ -9,6 +9,10 @@ import ChangePassword from './Pages/ChangePassword.jsx'
 import Otp from './Pages/Otp.jsx'
 import Result from './Pages/Result.jsx';
 import Practice from './Pages/Practice.jsx';
+import Sphere from './Pages/Sphere.jsx';
+import Rating from './Pages/Rating.jsx';
+
+import Play1v1 from './Pages/Play1v1.jsx';
 
 
 const App = () => {
@@ -30,6 +34,9 @@ const App = () => {
       <Route path='/otp' element={<Otp/>}/>
       <Route path='/result' element={<Result/>}/>
       <Route path="/practice" element={<Practice/>}/>
+      <Route path="/sphere" element={<Sphere/>}/>
+      <Route path="/rating" element={<Rating/>}/>
+      <Route path="/play" element={<Play1v1/>}/>
       </Routes>
       
     </div>

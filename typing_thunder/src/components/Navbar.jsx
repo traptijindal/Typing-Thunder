@@ -3,12 +3,14 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "/Logo.png";
 import usernamePic from "/Group 41.png"; // Update the path if necessary
+import { useLocation } from "react-router-dom";
 
 const Navbar = () => {
   const { user: auth0User, isAuthenticated, logout } = useAuth0();
   const [user, setUser] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const userString = localStorage.getItem("user");
@@ -74,11 +76,11 @@ const Navbar = () => {
         </button>
         {isMenuOpen && (
           <div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg z-50">
-            <Link to="/"><p className="text-white p-2 cursor-pointer">Speed Test</p></Link>
-            <p className="text-[#666666] p-2 cursor-pointer">Play 1 v 1</p>
-            <Link to="/practice"><p className="text-[#666666] p-2 cursor-pointer">Practice</p></Link>
-            <p className="text-[#666666] p-2 cursor-pointer">Sphere</p>
-            <p className="text-[#666666] p-2 cursor-pointer">Ratings</p>
+            <Link to="/"><p className={`${location.pathname==='/' ? 'text-white': 'text-[#666666] '} p-2 cursor-pointer`}>Speed Test</p></Link>
+           <Link to="/play"> <p className={`${location.pathname==="/play"} ? 'text-white' : 'text-[#666666]'  p-2 cursor-pointer`}>Play 1 v 1</p></Link>
+            <Link to="/practice"><p className={`${location.pathname==='/practice' ? 'text-white' : 'text-#666666'} p-2 cursor-pointer`}>Practice</p></Link>
+            <Link to="/sphere"><p className={`${location.pathname==="/sphere" ? "text-white" : "text-[#666666]"}  p-2 cursor-pointer`}>Sphere</p></Link>
+            <Link to="/rating"><p className={`${location.pathname==='/rating' ? 'text-white': 'text-[#666666] '} p-2 cursor-pointer`}>Ratings</p></Link>
             {user ? (
               <>
                 <p className="text-white p-2">{user.username}</p>
@@ -114,11 +116,11 @@ const Navbar = () => {
         )}
       </div>
       <div className="hidden md:flex space-x-[4vw] text-sm lg:text-base">
-        <Link to="/"><p className="text-white">Speed Test</p></Link>
-        <p className="text-[#666666]">Play 1 v 1</p>
-       <Link to="/practice"> <p className="text-[#666666]">Practice</p></Link>
-        <p className="text-[#666666]">Sphere</p>
-        <p className="text-[#666666]">Ratings</p>
+        <Link to="/"><p className={`${location.pathname==='/' ? 'text-white': 'text-[#666666] '} `}>Speed Test</p></Link>
+       <Link to="/play"> <p className={`${location.pathname==='/play' ? 'text-white': 'text-[#666666] '}`}>Play 1 v 1</p></Link>
+       <Link to="/practice"> <p className={`${location.pathname==='/practice' ? 'text-white': 'text-[#666666] '} `}>Practice</p></Link>
+        <Link to="/sphere"><p className={`${location.pathname==='/sphere' ? 'text-white': 'text-[#666666] '} `}>Sphere</p></Link>
+       <Link to="/rating"> <p className={`${location.pathname==='/rating' ? 'text-white': 'text-[#666666] '} `}>Ratings</p></Link>
       </div>
       <div className="hidden md:flex text-base font-medium space-x-[1vw] ">
         {user ? (

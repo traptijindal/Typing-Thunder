@@ -1,8 +1,9 @@
-import React from "react";
+import React,{useState} from "react";
 import { useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import ActionButtons from "../components/ActionButtons";
+import ShareResult from "../components/ShareResult.jsx";
 
 import {
   calculateAccuracy,
@@ -14,9 +15,10 @@ import {
   calculateRaw,
 } from "../utils/utils.js";
 
+
 const Result = () => {
   const location = useLocation();
-  const { userInput, text, Total_time, timeLeft } = location.state || {};
+  const { userInput, text, timeLeft, Total_time } = location.state;
   const incorrect = calculateIncorrect(userInput, text);
   const accuracy = calculateAccuracy(userInput, text);
   const speed = calculateSpeed(userInput, Total_time, timeLeft);
@@ -24,6 +26,17 @@ const Result = () => {
   const missed = calculateMissed(userInput, text);
   const raw = calculateRaw(userInput);
   const extra = calculateExtra(userInput, text);
+  const [showSharePopup, setShowSharePopup] = useState(false);
+
+
+  const handleShareClick= () =>{
+    setShowSharePopup(true);
+  }
+
+  const handleShareClose= ()=>{
+    setShowSharePopup(false);
+  }
+
 
   return (
     <div className="m-5 md:mt-[25px] lg:mt-[28px] lg:mx-[80px] overflow-hidden static">
@@ -65,8 +78,13 @@ const Result = () => {
         </div>
       </div>
 
-      <ActionButtons />
+      <ActionButtons  onShareClick={handleShareClick}/>
       <Footer />
+      {showSharePopup && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <ShareResult  onClose={handleShareClose}/>
+        </div>
+      )}
     </div>
   );
 };
