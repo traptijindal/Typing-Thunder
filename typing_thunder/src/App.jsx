@@ -13,6 +13,7 @@ import Sphere from './Pages/Sphere.jsx';
 import Rating from './Pages/Rating.jsx';
 
 import Play1v1 from './Pages/Play1v1.jsx';
+import Play1v1Result from './Pages/Play1v1Result.jsx';
 
 
 const App = () => {
@@ -37,6 +38,7 @@ const App = () => {
       <Route path="/sphere" element={<Sphere/>}/>
       <Route path="/rating" element={<Rating/>}/>
       <Route path="/play" element={<Play1v1/>}/>
+      <Route path="/playresult" element={<Play1v1Result/>}/>
       </Routes>
       
     </div>

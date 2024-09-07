@@ -188,7 +188,7 @@ const Timer_word = ({
       )}
 
       {showButtons && !isRunning && !timeUp && (
-        <div className="flex justify-center space-x-6 mb-6">
+        <div className="flex justify-center space-x-6 mb-7">
           <div className="flex flex-col items-center">
             <div className="flex justify-between items-center rounded-3xl p-3 bg-[black] text-[#4D4D4D] font-medium w-20 border-2 border-[#333333] shadow-sm shadow-black">
               <p

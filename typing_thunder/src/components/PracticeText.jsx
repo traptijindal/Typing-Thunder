@@ -114,7 +114,7 @@ const PracticeText = ({ userInput, originalText, setUserInput,setShowButtons }) 
       </div>
       {showText &&(
         <p className="text-[#666666] text-center text-lg mb-6">
-       Start typing words to practice simply paste your text to practice over that particular text.
+         Simply paste your text and start typing words to practice over that particular text.
       </p>
       )}
 

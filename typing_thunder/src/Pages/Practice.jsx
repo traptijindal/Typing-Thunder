@@ -14,7 +14,7 @@ const Practice = () => {
   
 
   return (
-    <div className='m-5 md:mt-[25px] lg:mt-[28px] lg:mx-[80px] overflow-hidden static '>
+    <div className=' m-5 md:m-0 md:mt-[25px] lg:mt-[28px] lg:mx-[80px] overflow-hidden static '>
       <Navbar/>
       <ProgressTracker userInput={userInput} text={originalText} />
       <CutPaste userInput={userInput} originalText={originalText} setOriginalText={setOriginalText} setUserInput={setUserInput}/>
