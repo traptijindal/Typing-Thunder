@@ -33,7 +33,7 @@ const generateAccessAndRefreshToken = async (userId) => {
   try {
     const user = await User.findById(userId);
     const accessToken = user.generateAccessToken();
-    const refreshToken = user.generateRefreshToken(); // Ensure the correct method name
+    const refreshToken = user.generateRefreshToken();
 
     user.refreshToken = refreshToken;
     await user.save({ validateBeforeSave: false });
@@ -136,21 +136,20 @@ const sendOTPVerificationEmail = async (email, userId) => {
 const signUser = asyncHandler(async (req, res) => {
   const { username, password, email } = req.body;
 
-  // Regular expressions for validation
+ 
   const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
   const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{6,}$/;
 
-  // Check if any field is empty
   if ([username, password, email].some((field) => field?.trim() === "")) {
     return res.status(400).json({ message: "All fields are required" });
   }
 
-  // Validate email
+  
   if (!emailRegex.test(email)) {
     return res.status(400).json({ message: "Invalid email format. Only Gmail addresses are allowed." });
   }
 
-  // Validate password
+
   if (!passwordRegex.test(password)) {
     return res.status(400).json({
       message: "Password must be at least 6 characters long, contain one uppercase letter, one special character, and one number.",
@@ -189,44 +188,6 @@ const signUser = asyncHandler(async (req, res) => {
   });
 });
 
-
-
-// loginUser Controller
-// const loginUser = asyncHandler(async (req, res) => {
-//   const { email, password, username } = req.body;
-
- 
-//   if ((!username && !email) || !password) {
-//     throw new ApiError(400, "Username or email and password are required");
-//   }
-//   const user = await User.findOne({
-//     $or: [{ username }, { email }],
-//   });
-
-//   if (!user) {
-//     throw new ApiError(400, "User not found!");
-//   }
-
-//   const isPasswordValid = await user.isPasswordCorrect(password);
-//   if (!isPasswordValid) {
-//     console.log("invalid password");
-//     throw new ApiError(401, "Wrong password");
-//   }
-
-//   const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user._id);
-
-//   const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
-//   const options = {
-//     httpOnly: true,
-//     secure: true,
-//   };
-
-//   return res
-//     .status(200)
-//     .cookie("accessToken", accessToken, options)
-//     .cookie("refreshToken", refreshToken, options)
-//     .json(new ApiResponse(200, { user: loggedInUser, accessToken, refreshToken }, "User logged in successfully"));
-// });
 
 
 const loginUser = asyncHandler(async (req, res) => {

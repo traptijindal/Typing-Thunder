@@ -16,6 +16,7 @@ import Play1v1 from './Pages/Play1v1.jsx';
 import Play1v1Result from './Pages/Play1v1Result.jsx';
 
 
+
 const App = () => {
   return (
     <Auth0Provider
@@ -39,6 +40,7 @@ const App = () => {
       <Route path="/rating" element={<Rating/>}/>
       <Route path="/play" element={<Play1v1/>}/>
       <Route path="/playresult" element={<Play1v1Result/>}/>
+   
       </Routes>
       
     </div>

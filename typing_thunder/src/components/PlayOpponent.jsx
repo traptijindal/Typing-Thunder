@@ -1,87 +1,180 @@
-// import React from "react";
+import React, { useEffect, useState } from "react";
+import io from "socket.io-client";
+import ProgressTracker1v1 from "./ProgressTracker1v1";
+import Textarea from "./Textarea";
+import { useTypingGame } from "../hooks/useTypingGame";
+import { calculateProgress } from "../utils/utils";
 
-// const PlayOpponent = () => {
-//   return (
-//     <>
-//       <div className="flex justify-center">
-//         <div className="flex items-center justify-center bg-[#333333] h-[210px] w-[430px] rounded-xl">
-//           <p className="text-4xl text-white font-medium">Lakshayyy(You)</p>
-//         </div>
+// Retrieve accessToken from localStorage or other secure source
+const accessToken = JSON.parse(localStorage.getItem("user"))?.accessToken;
 
-//         <div className="flex items-center mx-12">
-//         <p className="text-white font-bold text-8xl">VS</p>
-//         </div>
-
-//         <div className="flex items-center justify-center bg-[#333333] h-[210px] w-[430px] rounded-xl">
-//           <p className="text-6xl text-white font-medium">?</p>
-//         </div>
-//       </div>
-
-//       <div className="flex justify-center">
-//       <button className="h-12 w-60 text-black bg-white py-2 px-4 rounded-xl text-base font-semibold my-5">
-//         Find Player
-//       </button>
-//       </div>
-//     </>
-//   );
-// };
-
-// export default PlayOpponent;
-
-
-import React, { useState, useEffect } from 'react';
-import io from 'socket.io-client';
-
-const socket = io(process.env.REACT_APP_SOCKET_URL);
+const socket = io("http://localhost:8000", {
+  auth: {
+    token: accessToken,
+  },
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000,
+});
 
 const PlayOpponent = () => {
-  const [username, setUsername] = useState('');
-  const [opponent, setOpponent] = useState(null);
+  const [playerName, setPlayerName] = useState("");
+  const [opponentName, setOpponentName] = useState("?");
+  const [clicked, setClicked] = useState(false);
+  const [countdown, setCountdown] = useState(null);
+  const [showGame, setShowGame] = useState(false);
+  const [roomId, setRoomId] = useState(""); // Store room ID
+
+  const defaultText =
+    "Most of them are based on basic text fields that were modified...";
+  const {
+    randomText,
+    isRunning,
+    userInput,
+    text,
+    setUserInput,
+    setText,
+    progress,
+  } = useTypingGame(defaultText);
+
+  const [opponentProgress, setOpponentProgress] = useState(0);
+  const [opponentInput, setOpponentInput] = useState("");
 
   useEffect(() => {
-    // Retrieve the username from local storage
-    const storedUser = JSON.parse(localStorage.getItem('user'));
-    if (storedUser && storedUser.username) {
-      setUsername(storedUser.username);
+    if (isRunning) {
+      const progress = calculateProgress(userInput, text);
+      socket.emit("typing-progress", { roomId, progress });
     }
 
-    socket.on('match_found', (data) => {
-      setOpponent(data.opponent);
+    socket.on("opponent-progress", (data) => {
+      setOpponentProgress(data.progress);
     });
 
     return () => {
-      socket.off('match_found');
+      socket.off("opponent-progress");
+    };
+  }, [userInput, isRunning]);
+
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (user && user.username) {
+      setPlayerName(user.username);
+    }
+
+    // Listen for the opponent-found event and join the assigned room
+    socket.on("opponent-found", (data) => {
+      setOpponentName(data.opponentUsername);
+      setRoomId(data.roomId); // Set the room ID
+      console.log("Opponent found:", data.opponentUsername);
+
+      // Join the room
+      socket.emit("join-room", data.roomId);
+
+      // Start the countdown after opponent is found
+      setTimeout(() => {
+        startCountdown();
+      }, 1000);
+    });
+
+    return () => {
+      socket.off("opponent-found");
     };
   }, []);
 
-  const handleFindPlayer = () => {
-    socket.emit('find_opponent', username);
+  useEffect(() => {
+    if (roomId) {
+      socket.on("opponent-input", (opponentText) => {
+        setOpponentInput((prev) => prev + opponentText);
+      });
+
+      return () => {
+        socket.off("opponent-input");
+      };
+    }
+  }, [roomId]);
+
+  const startCountdown = () => {
+    setCountdown(5);
+    const interval = setInterval(() => {
+      setCountdown((prevTime) => {
+        if (prevTime === 1) {
+          clearInterval(interval);
+          setShowGame(true);
+          return null;
+        }
+        return prevTime - 1;
+      });
+    }, 1000);
+  };
+
+  const findOpponent = () => {
+    if (playerName) {
+      socket.emit("find-opponent", { username: playerName });
+    } else {
+      console.warn("Player name is not set");
+    }
+    setClicked(true);
   };
 
   return (
     <>
-      <div className="flex justify-center">
-        <div className="flex items-center justify-center bg-[#333333] h-[210px] w-[430px] rounded-xl">
-          <p className="text-4xl text-white font-medium">{username}(You)</p>
-        </div>
+      {showGame ? (
+        <>
+          <div>
+            <ProgressTracker1v1
+              userProgress={progress}
+              opponentProgress={opponentProgress}
+            />
+            <Textarea
+              randomText={randomText}
+              userInput={userInput}
+              setUserInput={setUserInput}
+              text={text}
+              setText={setText}
+              isRunning={isRunning}
+              is1v1={true}
+              opponentInput={opponentInput}
+              setOpponentInput={setOpponentInput}
+              roomId={roomId} // Pass roomId to Textarea
+            />
+          </div>
+        </>
+      ) : (
+        <>
+          <div className={`flex justify-center ${countdown !== null ? "opacity-50" : ""}`}>
+            <div className="flex items-center justify-center bg-[#333333] h-[210px] w-[430px] rounded-xl">
+              <p className="text-4xl text-white font-medium">{playerName}(You)</p>
+            </div>
 
-        <div className="flex items-center mx-12">
-          <p className="text-white font-bold text-8xl">VS</p>
-        </div>
+            <div className="flex items-center mx-12">
+              <p className="text-white font-bold text-8xl">VS</p>
+            </div>
 
-        <div className="flex items-center justify-center bg-[#333333] h-[210px] w-[430px] rounded-xl">
-          <p className="text-6xl text-white font-medium">{opponent || '?'}</p>
-        </div>
-      </div>
+            <div className="flex items-center justify-center bg-[#333333] h-[210px] w-[430px] rounded-xl">
+              <p className="text-4xl text-white font-medium">{opponentName}</p>
+            </div>
+          </div>
 
-      <div className="flex justify-center">
-        <button
-          className="h-12 w-60 text-black bg-white py-2 px-4 rounded-xl text-base font-semibold my-5"
-          onClick={handleFindPlayer}
-        >
-          Find Player
-        </button>
-      </div>
+          <div className="flex justify-center">
+            {!clicked ? (
+              <button
+                className="h-12 w-60 text-black bg-white py-2 px-4 rounded-xl text-base font-semibold my-5"
+                onClick={findOpponent}
+              >
+                Find Player
+              </button>
+            ) : (
+              <div className="h-12 w-60 rounded-xl my-5" />
+            )}
+          </div>
+
+          {countdown !== null && (
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2  p-10 rounded-xl text-white text-4xl font-normal">
+              Starting in: {countdown}
+            </div>
+          )}
+        </>
+      )}
     </>
   );
 };

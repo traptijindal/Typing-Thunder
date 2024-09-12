@@ -12,10 +12,33 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // useEffect(() => {
+  //   const userString = localStorage.getItem("user");
+  //   const email = localStorage.getItem("email");
+  //   const username = localStorage.getItem("username");
+
+  //   if (userString) {
+  //     try {
+  //       const localStorageUser = JSON.parse(userString);
+  //       setUser({
+  //         username: localStorageUser.username,
+  //         email: localStorageUser.email,
+  //       });
+  //     } catch (e) {
+  //       console.error("Error parsing user data from local storage:", e);
+  //     }
+  //   } else if (email && username) {
+  //     setUser({ username, email });
+  //   } else if (isAuthenticated && auth0User) {
+  //     setUser({
+  //       username: auth0User.name,
+  //       email: auth0User.email,
+  //     });
+  //   }
+  // }, [isAuthenticated, auth0User]);
+
   useEffect(() => {
     const userString = localStorage.getItem("user");
-    const email = localStorage.getItem("email");
-    const username = localStorage.getItem("username");
 
     if (userString) {
       try {
@@ -27,8 +50,6 @@ const Navbar = () => {
       } catch (e) {
         console.error("Error parsing user data from local storage:", e);
       }
-    } else if (email && username) {
-      setUser({ username, email });
     } else if (isAuthenticated && auth0User) {
       setUser({
         username: auth0User.name,
@@ -37,10 +58,16 @@ const Navbar = () => {
     }
   }, [isAuthenticated, auth0User]);
 
+  // const handleLogout = () => {
+  //   localStorage.removeItem("user");
+  //   localStorage.removeItem("email");
+  //   localStorage.removeItem("username");
+  //   logout({ returnTo: window.location.origin });
+  // };
+
+
   const handleLogout = () => {
     localStorage.removeItem("user");
-    localStorage.removeItem("email");
-    localStorage.removeItem("username");
     logout({ returnTo: window.location.origin });
   };
 

@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
 import ProgressTracker from "./ProgressTracker";
+import io from "socket.io-client";
+
+const socket = io("http://localhost:8000");
 
 const Textarea = ({
   randomText,
@@ -9,6 +12,10 @@ const Textarea = ({
   setUserInput,
   text,
   setText,
+  is1v1 = false,
+  roomId,  // Receiving roomId from PlayOpponent
+  opponentInput,
+  setOpponentInput,
 }) => {
   const [shiftPressed, setShiftPressed] = useState(false);
   const [capsLockOn, setCapsLockOn] = useState(false);
@@ -54,7 +61,21 @@ const Textarea = ({
     }
   }, [randomNumber]);
 
-  const getHighlightedText = (input, text) => {
+  
+  useEffect(() => {
+    if (is1v1) {
+      socket.on("opponent-input", (opponentInput) => {
+        setOpponentInput((prevInput) => prevInput + opponentInput);
+        
+      });
+
+      return () => {
+        socket.off("opponent-input");
+      };
+    }
+  }, [is1v1]);
+
+  const getHighlightedText = (input, text = "") => {
     return text.split("").map((char, index) => {
       if (index < input.length) {
         return input[index] === char ? (
@@ -83,81 +104,84 @@ const Textarea = ({
     });
   };
 
+  const handleKeyDown = (e) => {
+    let key = e.key;
+
+    const nonPrintableKeys = [
+      "Alt", "Control", "Meta", "Escape", "ArrowUp", "ArrowDown", "ArrowLeft",
+      "ArrowRight", "PageUp", "PageDown", "Home", "End", "Insert", "Delete",
+      "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12",
+      "Tab", "NumLock", "ScrollLock", "Pause", "PrintScreen", "Fn", "ContextMenu"
+    ];
+
+    if (nonPrintableKeys.includes(key)) return;
+
+    if (e.altKey) return;
+
+    if (key === "Shift") {
+      setShiftPressed(true);
+      return;
+    }
+
+    if (key === "CapsLock") {
+      setCapsLockOn((prevState) => !prevState);
+      return;
+    }
+
+    if (key === "Backspace") {
+      setUserInput((prevInput) => prevInput.slice(0, -1));
+      return;
+    }
+
+    if (shiftPressed && shiftSymbols[key]) {
+      key = shiftSymbols[key];
+    } else {
+      key = capsLockOn ? key.toUpperCase() : key.toLowerCase();
+      if (shiftPressed && !shiftSymbols[key]) {
+        key = key.toUpperCase();
+      }
+    }
+
+    setUserInput((prevInput) => prevInput + key);
+
+    
+    if (is1v1 && roomId) {
+      socket.emit("user-input", { key, roomId });
+    }
+  };
  
+  const handleKeyUp = (e) => {
+    if (e.key === "Shift") {
+      setShiftPressed(false);
+    }
+  };
+
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      let key = e.key;
-  
-      // Ignore non-printable keys
-      const nonPrintableKeys = [
-        "Alt", "Control", "Meta", "Escape", "ArrowUp", "ArrowDown", "ArrowLeft", 
-        "ArrowRight", "PageUp", "PageDown", "Home", "End", "Insert", "Delete", 
-        "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12", 
-        "Tab", "NumLock", "ScrollLock", "Pause", "PrintScreen", "Fn", "ContextMenu"
-      ];
-  
-      if (nonPrintableKeys.includes(key)) {
-        return;
-      }
-  
-      if (e.altKey) {
-        return;
-      }
-  
-      if (key === "Shift") {
-        setShiftPressed(true);
-        return;
-      }
-  
-      if (key === "CapsLock") {
-        setCapsLockOn((prevState) => !prevState);
-        return;
-      }
-  
-      if (key === "Backspace") {
-        setUserInput((prevInput) => prevInput.slice(0, -1));
-        return;
-      }
-  
-      if (shiftPressed && shiftSymbols[key]) {
-        key = shiftSymbols[key];
-      } else {
-        if (capsLockOn) {
-          key = key.toUpperCase();
-        } else {
-          key = key.toLowerCase();
-        }
-  
-        if (shiftPressed && !shiftSymbols[key]) {
-          key = key.toUpperCase();
-        }
-      }
-  
-      setUserInput((prevInput) => prevInput + key);
-    };
-  
-    const handleKeyUp = (e) => {
-      if (e.key === "Shift") {
-        setShiftPressed(false);
-      }
-    };
-  
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
-  
+
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
   }, [shiftPressed, capsLockOn]);
-  
 
   return (
     <div className="mb-10">
-         {/* <ProgressTracker userInput={userInput} text={text}/> */}
+     
+      {!is1v1 && <ProgressTracker userInput={userInput} text={text} />}
+
+    
       <div className="text-[20px] lg:text-[25px] text-start font-ocr">
         {getHighlightedText(userInput, text)}
       </div>
+
+      {is1v1 && (
+        <div className="mt-5 text-[20px] lg:text-[25px] text-start font-ocr">
+          <p className="text-green-500">Opponent:</p>
+          {getHighlightedText(opponentInput, text)}
+        </div>
+      )}
     </div>
   );
 };

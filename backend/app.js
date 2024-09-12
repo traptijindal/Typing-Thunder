@@ -1,95 +1,111 @@
-import express from 'express'
-import cors from 'cors'
-import cookieParser from 'cookie-parser'
+import express from 'express';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const app = express();
 
 app.use(cors({
-    origin : process.env.CORS_ORIGIN,
-    credentials:true
-}))
+  origin: 'http://localhost:5173',
+  credentials: true,
+}));
+app.use(express.json({ limit: '16kb' }));
+app.use(express.urlencoded({ extended: true, limit: '16kb' }));
+app.use(express.static('public'));
+app.use(cookieParser());
 
-app.use(express.json({limit: "16kb"}))
-app.use(express.urlencoded({extended : true , limit: "16kb"}))
-app.use(express.static("public"))
-app.use(cookieParser())
+import userRouter from './routes/user.routes.js';
+app.use('/api/v1/users', userRouter);
 
-import userRouter from "./routes/user.routes.js"
+const httpServer = createServer(app);
 
-app.use("/api/v1/users",userRouter)
+const io = new Server(httpServer, {
+  cors: {
+    origin: 'http://localhost:5173',
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
+});
 
-export {app}
+let players = []; 
+let matches = {}; 
 
-// import express from 'express';
-// import cors from 'cors';
-// import cookieParser from 'cookie-parser';
-// import { createServer } from 'http';
-// import { Server } from 'socket.io';
+io.on('connection', (socket) => {
+  console.log('New socket connection:', socket.id);
 
-// const app = express();
-// const server = createServer(app);
-// const io = new Server(server, {
-//   cors: {
-//     origin: process.env.CORS_ORIGIN,
-//     credentials: true,
-//   },
-// });
+  socket.on('find-opponent', ({ username }) => {
+    const playerExists = players.some(player => player.socketId === socket.id);
 
-// app.use(cors({
-//   origin: process.env.CORS_ORIGIN,
-//   credentials: true,
-// }));
+    if (!playerExists) {
+      players.push({ username, socketId: socket.id });
+      console.log('Players queue:', players);
 
-// app.use(express.json({ limit: '16kb' }));
-// app.use(express.urlencoded({ extended: true, limit: '16kb' }));
-// app.use(express.static('public'));
-// app.use(cookieParser());
-
-// import userRouter from './routes/user.routes.js';
-
-// app.use('/api/v1/users', userRouter);
-
-// io.on('connection', (socket) => {
-//     console.log('A user connected:', socket.id);
-  
-//     // Handle finding an opponent
-//     socket.on('find_opponent', () => {
-//       waitingPlayers.push(socket);
-  
-//       if (waitingPlayers.length >= 2) {
-//         // Pop two players from the queue
-//         const player1 = waitingPlayers.shift();
-//         const player2 = waitingPlayers.shift();
-  
-//         // Create match information
-//         const matchInfoPlayer1 = { opponent: 'Player 2' };
-//         const matchInfoPlayer2 = { opponent: 'Player 1' };
-  
-//         // Notify both players they have been matched
-//         player1.emit('match_found', matchInfoPlayer1);
-//         player2.emit('match_found', matchInfoPlayer2);
-  
-//         console.log(`Matched ${player1.id} with ${player2.id}`);
-//       }
-//     });
-  
-//     // Handle disconnection
-//     socket.on('disconnect', () => {
-//       console.log('A user disconnected:', socket.id);
       
-//       // Remove the disconnected socket from the waiting queue if present
-//       const index = waitingPlayers.indexOf(socket);
-//       if (index !== -1) {
-//         waitingPlayers.splice(index, 1);
-//       }
-//     });
-//   });
-  
+      if (players.length >= 2) {
+        const player1 = players.shift(); 
+        const player2 = players.shift(); 
 
-// server.listen(process.env.PORT || 3000, () => {
-//   console.log(`Server running on port ${process.env.PORT || 3000}`);
-// });
+        const roomId = `room-${player1.socketId}-${player2.socketId}`; 
+        matches[socket.id] = roomId;
 
-// export { app };
+        // Both players join the room
+        socket.join(roomId);
+        io.sockets.sockets.get(player2.socketId).join(roomId);
+
+        // Notify both players that they've been matched and provide opponent's username
+        io.to(player1.socketId).emit('opponent-found', { opponentUsername: player2.username, roomId });
+        io.to(player2.socketId).emit('opponent-found', { opponentUsername: player1.username, roomId });
+
+        console.log(`Match found: ${player1.username} vs ${player2.username} in room ${roomId}`);
+      }
+    } else {
+      console.log('Player already in the queue:', username);
+    }
+  });
+
+  // Handle user input and broadcast it to the room
+  socket.on('user-input', ({ key, roomId }) => {
+    if (roomId) {
+      
+      socket.to(roomId).emit('opponent-input', key);
+      console.log(`Key '${key}' from player ${socket.id} sent to room ${roomId}`);
+    } else {
+      console.log('No room found for player:', socket.id);
+    }
+  });
 
 
+  socket.on('typing-progress', ({ progress, roomId }) => {
+    if (roomId) {
+     
+      socket.to(roomId).emit('opponent-progress', { progress });
+      console.log(`Progress from player ${socket.id}: ${progress}% sent to room ${roomId}`);
+    } else {
+      console.log('No room found for player:', socket.id);
+    }
+  });
+
+  // Handle player disconnect
+  socket.on('disconnect', () => {
+    console.log('Socket disconnected:', socket.id);
+
+   
+    players = players.filter(player => player.socketId !== socket.id);
+    console.log('Player removed from queue:', socket.id);
+
+    // If the player was in a match, notify the room
+    const roomId = matches[socket.id];
+    if (roomId) {
+      // Notify the room that the player has disconnected
+      socket.to(roomId).emit('opponent-disconnected');
+      console.log(`Player ${socket.id} was in room ${roomId} and has disconnected.`);
+      delete matches[socket.id];
+    }
+  });
+});
+
+export { app, httpServer };
