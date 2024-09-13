@@ -12,6 +12,12 @@ const ProgressTracker1v1 = ({ userProgress, opponentProgress }) => {
           className="absolute bottom-4 transition-transform duration-300"
           style={{ left: `${userProgress}%`, transform: "translateX(-50%)" }}
         />
+         <img
+          src={profile}
+          alt="profile"
+          className="absolute bottom-4 transition-transform duration-300"
+          style={{ left: `${opponentProgress}%`, transform: "translateX(-50%)" }}
+        />
         <div
           className="absolute w-full h-1"
           style={{

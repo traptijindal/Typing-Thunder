@@ -83,8 +83,8 @@ const PlayOpponent = () => {
 
   useEffect(() => {
     if (roomId) {
-      socket.on("opponent-input", (opponentText) => {
-        setOpponentInput((prev) => prev + opponentText);
+      socket.on("opponent-input", (key) => {
+        setOpponentInput((prev) => prev + key);
       });
 
       return () => {
@@ -92,6 +92,8 @@ const PlayOpponent = () => {
       };
     }
   }, [roomId]);
+
+ 
 
   const startCountdown = () => {
     setCountdown(5);
@@ -136,6 +138,7 @@ const PlayOpponent = () => {
               opponentInput={opponentInput}
               setOpponentInput={setOpponentInput}
               roomId={roomId} // Pass roomId to Textarea
+              opponentName={opponentName}
             />
           </div>
         </>

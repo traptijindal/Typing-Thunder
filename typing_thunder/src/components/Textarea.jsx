@@ -16,6 +16,7 @@ const Textarea = ({
   roomId,  // Receiving roomId from PlayOpponent
   opponentInput,
   setOpponentInput,
+  opponentName
 }) => {
   const [shiftPressed, setShiftPressed] = useState(false);
   const [capsLockOn, setCapsLockOn] = useState(false);
@@ -64,8 +65,8 @@ const Textarea = ({
   
   useEffect(() => {
     if (is1v1) {
-      socket.on("opponent-input", (opponentInput) => {
-        setOpponentInput((prevInput) => prevInput + opponentInput);
+      socket.on("opponent-input", (key) => {
+        setOpponentInput((prevInput) => prevInput + key);
         
       });
 
@@ -178,7 +179,7 @@ const Textarea = ({
 
       {is1v1 && (
         <div className="mt-5 text-[20px] lg:text-[25px] text-start font-ocr">
-          <p className="text-green-500">Opponent:</p>
+          <p className="text-green-500">Opponent:{opponentName}</p>
           {getHighlightedText(opponentInput, text)}
         </div>
       )}
