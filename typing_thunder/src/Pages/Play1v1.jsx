@@ -19,3 +19,4 @@ const Play1v1 = () => {
 }
 
 export default Play1v1
+

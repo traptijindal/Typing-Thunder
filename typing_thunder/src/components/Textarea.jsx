@@ -63,18 +63,18 @@ const Textarea = ({
   }, [randomNumber]);
 
   
-  useEffect(() => {
-    if (is1v1) {
-      socket.on("opponent-input", (key) => {
-        setOpponentInput((prevInput) => prevInput + key);
+  // useEffect(() => {
+   
+  //     socket.on("opponent-input", (key) => {
+  //       setOpponentInput(prevInput => prevInput + key);
         
-      });
+  //     });
 
-      return () => {
-        socket.off("opponent-input");
-      };
-    }
-  }, [is1v1]);
+  //     return () => {
+  //       socket.off("opponent-input");
+  //     };
+  //   }
+  // , []);
 
   const getHighlightedText = (input, text = "") => {
     return text.split("").map((char, index) => {
@@ -177,14 +177,11 @@ const Textarea = ({
         {getHighlightedText(userInput, text)}
       </div>
 
-      {is1v1 && (
-        <div className="mt-5 text-[20px] lg:text-[25px] text-start font-ocr">
-          <p className="text-green-500">Opponent:{opponentName}</p>
-          {getHighlightedText(opponentInput, text)}
-        </div>
-      )}
+      
     </div>
   );
 };
 
 export default Textarea;
+
+

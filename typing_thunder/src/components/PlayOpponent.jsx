@@ -1,21 +1,11 @@
-import React, { useEffect, useState } from "react";
+ import React, { useEffect, useState } from "react";
 import io from "socket.io-client";
 import ProgressTracker1v1 from "./ProgressTracker1v1";
 import Textarea from "./Textarea";
 import { useTypingGame } from "../hooks/useTypingGame";
 import { calculateProgress } from "../utils/utils";
 
-// Retrieve accessToken from localStorage or other secure source
-const accessToken = JSON.parse(localStorage.getItem("user"))?.accessToken;
-
-const socket = io("http://localhost:8000", {
-  auth: {
-    token: accessToken,
-  },
-  reconnection: true,
-  reconnectionAttempts: 5,
-  reconnectionDelay: 1000,
-});
+const socket = io("http://localhost:8000");
 
 const PlayOpponent = () => {
   const [playerName, setPlayerName] = useState("");
@@ -23,10 +13,12 @@ const PlayOpponent = () => {
   const [clicked, setClicked] = useState(false);
   const [countdown, setCountdown] = useState(null);
   const [showGame, setShowGame] = useState(false);
-  const [roomId, setRoomId] = useState(""); // Store room ID
+  const [roomId, setRoomId] = useState("");
+  const [progress, setProgress] = useState(0); // Player progress
+  const [opponentProgress, setOpponentProgress] = useState(0); // Opponent progress
+  const [opponentInput, setOpponentInput] = useState("");
 
-  const defaultText =
-    "Most of them are based on basic text fields that were modified...";
+  const defaultText = "Most of them are based on basic text fields that were modified...";
   const {
     randomText,
     isRunning,
@@ -34,26 +26,7 @@ const PlayOpponent = () => {
     text,
     setUserInput,
     setText,
-    progress,
   } = useTypingGame(defaultText);
-
-  const [opponentProgress, setOpponentProgress] = useState(0);
-  const [opponentInput, setOpponentInput] = useState("");
-
-  useEffect(() => {
-    if (isRunning) {
-      const progress = calculateProgress(userInput, text);
-      socket.emit("typing-progress", { roomId, progress });
-    }
-
-    socket.on("opponent-progress", (data) => {
-      setOpponentProgress(data.progress);
-    });
-
-    return () => {
-      socket.off("opponent-progress");
-    };
-  }, [userInput, isRunning]);
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user"));
@@ -61,39 +34,34 @@ const PlayOpponent = () => {
       setPlayerName(user.username);
     }
 
-    // Listen for the opponent-found event and join the assigned room
+    // Listen for opponent finding and room joining
     socket.on("opponent-found", (data) => {
       setOpponentName(data.opponentUsername);
-      setRoomId(data.roomId); // Set the room ID
+      setRoomId(data.roomId);
       console.log("Opponent found:", data.opponentUsername);
 
-      // Join the room
       socket.emit("join-room", data.roomId);
 
-      // Start the countdown after opponent is found
       setTimeout(() => {
         startCountdown();
       }, 1000);
     });
 
+    // Listen for progress updates from the server
+    socket.on("progressUpdate", ({ userId, progress }) => {
+      console.log("Received progress update:", { userId, progress });
+      if (userId === socket.id) {
+        setProgress(progress);
+      } else {
+        setOpponentProgress(progress);
+      }
+    });
+
     return () => {
       socket.off("opponent-found");
+      socket.off("progressUpdate");
     };
   }, []);
-
-  useEffect(() => {
-    if (roomId) {
-      socket.on("opponent-input", (key) => {
-        setOpponentInput((prev) => prev + key);
-      });
-
-      return () => {
-        socket.off("opponent-input");
-      };
-    }
-  }, [roomId]);
-
- 
 
   const startCountdown = () => {
     setCountdown(5);
@@ -118,26 +86,39 @@ const PlayOpponent = () => {
     setClicked(true);
   };
 
+  const handleUserInput = (input) => {
+    setUserInput(input);
+    const progress = calculateProgress(input, text);
+    socket.emit("updateProgress", progress); // Send progress to the server
+  };
+
+  const handleOpponentInput = (input) => {
+    setOpponentInput(input);
+    const progress = calculateProgress(input, text);
+    socket.emit("updateProgress", progress); // Send opponent's progress to the server
+  };
+
   return (
     <>
       {showGame ? (
         <>
           <div>
             <ProgressTracker1v1
-              userProgress={progress}
-              opponentProgress={opponentProgress}
+              userInput={userInput}
+              opponentInput={opponentInput}
+              text={text}
             />
             <Textarea
               randomText={randomText}
               userInput={userInput}
-              setUserInput={setUserInput}
+              setUserInput={handleUserInput}
               text={text}
               setText={setText}
               isRunning={isRunning}
               is1v1={true}
               opponentInput={opponentInput}
-              setOpponentInput={setOpponentInput}
-              roomId={roomId} // Pass roomId to Textarea
+              setOpponentInput={handleOpponentInput}
+              roomId={roomId}
               opponentName={opponentName}
             />
           </div>
@@ -172,7 +153,7 @@ const PlayOpponent = () => {
           </div>
 
           {countdown !== null && (
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2  p-10 rounded-xl text-white text-4xl font-normal">
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 p-10 rounded-xl text-white text-4xl font-normal">
               Starting in: {countdown}
             </div>
           )}
